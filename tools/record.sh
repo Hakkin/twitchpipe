@@ -23,6 +23,8 @@ check_deps() {
   done
 }
 
+check_deps
+
 if [ "$#" -lt 1 ]; then
     errf 'Please supply username(s)'
     exit 1
