@@ -83,7 +83,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
 
 	token, err := getAcessToken(client, username)
 	if err != nil {
@@ -117,7 +119,7 @@ func main() {
 	}
 
 	tsURLs := make(chan string, 2)
-	done := make(chan error)
+	done := make(chan error, 1)
 	go streamTs(client, tsURLs, output, done)
 
 	var seenURLs []string
@@ -136,6 +138,7 @@ func main() {
 	for {
 		select {
 		case err := <-done:
+			close(tsURLs)
 			stdErr.Printf("error while streaming: %v\n", err)
 			os.Exit(2)
 		default:
