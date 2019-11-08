@@ -6,10 +6,20 @@ API_URL="https://api.twitch.tv/kraken/channels/"
 WEBSOCKET_URL="wss://pubsub-edge.twitch.tv/v1"
 CLIENT_ID="jzkbprff40iqj646a697cyrvl0zt2m6"
 
+PRINT_FILENAME=0
+
 errf(){ >&2 printf "$@"; }
 
 get_id () {
   curl --silent --fail -H "Client-ID: $CLIENT_ID" "$API_URL$1" | jq -r ._id
+}
+
+print_usage() {
+  errf "Usage: record [OPTIONS...] <USERNAMES...>\n"
+  errf "\n"
+  errf "Options:\n"
+  errf "  -h\tPrints this help text\n"
+  errf "  -p\tPrint filenames to standard output once stream ends\n"
 }
 
 check_deps() {
@@ -17,17 +27,40 @@ check_deps() {
   do
     if ! [ -x "$(command -v ${i})" ]
     then
-      errf "record: missing dependency '%s'\n" "${i}"
+      errf $'missing dependency \'%s\'\n' "${i}"
       exit 1
     fi
   done
 }
 
+invalid_input() {
+  errf "%s\n" "$1"
+  errf $'try \'record -h\' for usage information'
+  exit 1
+}
+
 check_deps
 
+while getopts ":ph" opt
+do
+  case "$opt" in
+    p )
+      PRINT_FILENAME=1
+      ;;
+    h )
+      print_usage
+      exit 0
+      ;;
+    \? )
+      invalid_input "$(printf $'unknown option \'-%s\'' "$OPTARG")"
+      ;;
+  esac
+done
+
+shift $((OPTIND -1))
+
 if [ "$#" -lt 1 ]; then
-    errf 'Please supply username(s)'
-    exit 1
+    invalid_input 'no username(s) supplied'
 fi
 
 errf 'fetching user IDs...\n'
@@ -38,7 +71,7 @@ do
   id=$(get_id $username)
   if [ "$id" == "" ];
   then
-    errf 'ERROR! could not get ID for "%s"' "$username"
+    errf $'ERROR! could not get ID for \'%s\'' "$username"
     exit 1
   fi
   id_username[$id]=$username
@@ -48,7 +81,7 @@ done
   trap exit SIGINT SIGTERM
   while :
   do
-    errf "connecting to websocket...\n"
+    errf 'connecting to websocket...\n'
     (
       (
         while :
@@ -62,10 +95,10 @@ done
         printf '{"type":"LISTEN","data":{"topics":["video-playback-by-id.%d"]}}\n' "$k"
       done
     ) | websocat "$WEBSOCKET_URL"
-    errf "disconnected, re"
+    errf 'disconnected, re'
   done
 ) | (
-  errf "monitoring streams...\n"
+  errf 'monitoring streams...\n'
   while read -r line;
   do
     #errf ">%s\n" "$line"
@@ -80,21 +113,25 @@ done
       then
         (
           username=${id_username[$id]}
-          errf "[%s] stream started\a\n" "$username"
+          errf '[%s] stream started\a\n' "$username"
           while :
           do
             mkdir -p "$username"
             filename=$(printf "%s/%s.ts" $username "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")
-            errf "[%s] recording to %s\n" "$username" "$filename"
+            errf '[%s] recording to %s\n' "$username" "$filename"
             (twitchpipe --archive "$username" >> "$filename") 2>&1 | (
               while read -r line;
               do
-                errf "[%s] %s\n" "$username" "$line"
+                errf '[%s] %s\n' "$username" "$line"
               done
             )
+            if [ "$PRINT_FILENAME" == "1" ];
+            then
+              printf '%s\n' "$filename"
+            fi
             if [ "${PIPESTATUS[0]}" == "2" ];
             then
-              errf "[%s] stream ended with error, restarting...\n" "$username"
+              errf '[%s] stream ended with error, restarting...\n' "$username"
               continue
             fi
             break
@@ -107,7 +144,7 @@ done
     RESPONSE)
       ;;
     *)
-      errf ">%s\n" "$line"
+      errf '>%s\n' "$line"
       ;;
     esac
   done
