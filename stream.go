@@ -27,15 +27,9 @@ func streamTs(c *http.Client, ts <-chan string, out io.Writer, done chan<- error
 				}
 
 				_, err = io.Copy(&writerError{out}, &readerError{res.Body})
-				if err != nil {
-					if errors.Is(err, io.EOF) {
-						return nil
-					}
+				if err != nil && !errors.Is(err, io.EOF) {
 					if wErr, ok := err.(*writeError); ok {
 						return &fatalError{fmt.Errorf("error while writing ts to output: %w", wErr.Unwrap())}
-					}
-					if errors.Is(err, io.ErrUnexpectedEOF) {
-						return &skipError{fmt.Errorf("got unexpected EOF while copying ts to output")}
 					}
 
 					return &skipError{fmt.Errorf("couldn't copy ts to output: %w", err)}
