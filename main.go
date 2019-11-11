@@ -93,10 +93,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	playlistURL, err := getPlaylist(client, username, token)
+	playlists, err := getPlaylists(client, username, token)
 	if err != nil {
 		stdErr.Printf("could not extract playlist: %v\n", err)
 		os.Exit(1)
+	}
+
+	var playlistURL string
+	for _, playlist := range playlists {
+		if playlist.Group == "chunked" {
+			playlistURL = playlist.URL
+			break
+		}
+	}
+
+	for _, playlist := range playlists {
+		stdErr.Printf("%#v\n", playlist)
+	}
+
+	if playlistURL == "" {
+		stdErr.Printf("could not find desired playlist quality")
+		os.Exit(2)
 	}
 
 	var output io.Writer = os.Stdout
