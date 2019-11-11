@@ -107,10 +107,6 @@ func main() {
 		}
 	}
 
-	for _, playlist := range playlists {
-		stdErr.Printf("%#v\n", playlist)
-	}
-
 	if playlistURL == "" {
 		stdErr.Printf("could not find desired playlist quality")
 		os.Exit(2)
