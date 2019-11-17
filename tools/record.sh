@@ -125,11 +125,12 @@ done
                 errf '[%s] %s\n' "$username" "$line"
               done
             )
+            EXIT_STATUS="${PIPESTATUS[0]}"
             if [ "$PRINT_FILENAME" == "1" ];
             then
               printf '%s\n' "$filename"
             fi
-            if [ "${PIPESTATUS[0]}" == "2" ];
+            if [ "$EXIT_STATUS" == "2" ];
             then
               errf '[%s] stream ended with error, restarting...\n' "$username"
               continue
