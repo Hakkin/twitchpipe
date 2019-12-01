@@ -51,6 +51,7 @@ func findBest(playlists []playlistInfo) playlistInfo {
 		}
 
 		if p.Bandwidth > highBitrate {
+			highBitrate = p.Bandwidth
 			best = p
 		}
 	}
