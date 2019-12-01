@@ -7,6 +7,7 @@ WEBSOCKET_URL="wss://pubsub-edge.twitch.tv/v1"
 CLIENT_ID="jzkbprff40iqj646a697cyrvl0zt2m6"
 
 PRINT_FILENAME=0
+GROUP="chunked"
 
 errf(){ >&2 printf "$@"; }
 
@@ -20,6 +21,7 @@ print_usage() {
   errf "Options:\n"
   errf "  -h\tPrints this help text\n"
   errf "  -p\tPrint filenames to standard output once stream ends\n"
+  errf "  -g\tSelect playlist group to record"
 }
 
 check_deps() {
@@ -41,7 +43,7 @@ invalid_input() {
 
 check_deps
 
-while getopts ":ph" opt
+while getopts ":phg:" opt
 do
   case "$opt" in
     p )
@@ -50,6 +52,9 @@ do
     h )
       print_usage
       exit 0
+      ;;
+    g )
+      GROUP="$OPTARG"
       ;;
     \? )
       invalid_input "$(printf $'unknown option \'-%s\'' "$OPTARG")"
@@ -119,7 +124,7 @@ done
             mkdir -p "$username"
             filename=$(printf "%s/%s.ts" $username "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")
             errf '[%s] recording to %s\n' "$username" "$filename"
-            (twitchpipe --archive "$username" >> "$filename") 2>&1 | (
+            (twitchpipe --archive --group "$GROUP" "$username" >> "$filename") 2>&1 | (
               while read -r line;
               do
                 errf '[%s] %s\n' "$username" "$line"
