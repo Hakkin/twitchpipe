@@ -21,7 +21,7 @@ print_usage() {
   errf "Options:\n"
   errf "  -h\tPrints this help text\n"
   errf "  -p\tPrint filenames to standard output once stream ends\n"
-  errf "  -g\tSelect playlist group to record"
+  errf "  -g\tSelect playlist group to record\n"
 }
 
 check_deps() {
