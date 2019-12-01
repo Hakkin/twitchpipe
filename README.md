@@ -17,10 +17,15 @@ written to its standard input.
 Otherwise, stream data will be written to standard output.
 
 Options:
+  -G, --list-groups
+        List available playlist groups and exit
   -a, --archive
         Start downloading from the oldest segment rather than the newest
   -f, --force-output
         Force output to standard output even if TTY is detected
+  -g, --group string
+        Select specified playlist group
+        "best" will select the best available group (default "best")
   -h, --hide-console
         Hide own console window
   -u, --url
