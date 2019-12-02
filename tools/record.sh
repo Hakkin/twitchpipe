@@ -58,11 +58,12 @@ do
       exit 0
       ;;
     t )
-    FILENAME_TITLE=1
-    ;;
-  d )
+      FILENAME_TITLE=1
+      ;;
+    d )
       FILENAME_DATE=1
-      DFORMAT="+""$OPTARG" # Capture date format for use in filename
+      DFORMAT="+""$OPTARG"
+      #OPTIND=`echo $OPTIND + 1 | bc`
       ;;
     \? )
       invalid_input "$(printf $'unknown option \'-%s\'' "$OPTARG")"
