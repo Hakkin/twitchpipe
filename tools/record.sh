@@ -7,11 +7,17 @@ WEBSOCKET_URL="wss://pubsub-edge.twitch.tv/v1"
 CLIENT_ID="jzkbprff40iqj646a697cyrvl0zt2m6"
 
 PRINT_FILENAME=0
+FILENAME_TITLE=0
+FILENAME_DATE=0
 
 errf(){ >&2 printf "$@"; }
 
 get_id () {
   curl --silent --fail -H "Client-ID: $CLIENT_ID" "$API_URL$1" | jq -r ._id
+}
+
+get_stream_title () {
+  curl --silent --fail -H "Client-ID: $CLIENT_ID" "$API_URL$1" | jq -r .status
 }
 
 print_usage() {
@@ -41,7 +47,7 @@ invalid_input() {
 
 check_deps
 
-while getopts ":ph" opt
+while getopts "d:pht" opt
 do
   case "$opt" in
     p )
@@ -50,6 +56,13 @@ do
     h )
       print_usage
       exit 0
+      ;;
+    t )
+    FILENAME_TITLE=1
+    ;;
+  d )
+      FILENAME_DATE=1
+      DFORMAT="+""$OPTARG" # Capture date format for use in filename
       ;;
     \? )
       invalid_input "$(printf $'unknown option \'-%s\'' "$OPTARG")"
@@ -113,11 +126,27 @@ done
       then
         (
           username=${id_username[$id]}
+          
           errf '[%s] stream started\a\n' "$username"
           while :
           do
             mkdir -p "$username"
-            filename=$(printf "%s/%s.ts" $username "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")
+
+            filename="$username/"
+            
+            if [ "$FILENAME_TITLE" == "1" ];
+              then
+                title=$(get_stream_title $username)
+                filename+="${title}_"
+            fi
+            if [ "$FILENAME_DATE" == "1" ];
+              then
+                filename+=$(date $DFORMAT)
+              else
+                filename+=$(date -u '+%Y-%m-%d-%H-%M-%S-(%Z)')
+            fi
+            filename+=".ts"
+
             errf '[%s] recording to %s\n' "$username" "$filename"
             (twitchpipe --archive "$username" >> "$filename") 2>&1 | (
               while read -r line;
