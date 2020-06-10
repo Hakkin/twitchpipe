@@ -2,17 +2,22 @@
 
 DEPS=("websocat" "curl" "jq" "cut" "twitchpipe")
 
-API_URL="https://api.twitch.tv/kraken/channels/"
+API_URL="https://gql.twitch.tv/gql"
 WEBSOCKET_URL="wss://pubsub-edge.twitch.tv/v1"
-CLIENT_ID="jzkbprff40iqj646a697cyrvl0zt2m6"
+CLIENT_ID="kimne78kx3ncx6brgo4mv6wki5h1ko"
 
 PRINT_FILENAME=0
 GROUP="chunked"
 
 errf(){ >&2 printf "$@"; }
 
-get_id () {
-  curl --silent --fail -H "Client-ID: $CLIENT_ID" "$API_URL$1" | jq -r ._id
+get_ids () {
+  USERNAMES="$(printf "%s\n" "${@}")"
+  USERNAMES_ARRAY="$(jq -R . <<< "${USERNAMES}" | jq -s -c .)"
+  QUERY_STRING="$(printf "{users(logins:%s){id}}" "${USERNAMES_ARRAY}")"
+  DATA="$(jq -c -R '{"query":.}' <<< "${QUERY_STRING}")"
+  IDS="$(curl --silent --fail -H "Client-ID: ${CLIENT_ID}" "${API_URL}" --data-raw "${DATA}" | jq -r ".data.users[].id | .//-1")"
+  echo -n "${IDS}"
 }
 
 print_usage() {
@@ -64,23 +69,28 @@ done
 
 shift $((OPTIND -1))
 
-if [ "$#" -lt 1 ]; then
-    invalid_input 'no username(s) supplied'
+USERNAMES=("${@,,}")
+
+if [ "${#USERNAMES[@]}" -lt 1 ]; then
+  invalid_input 'no username(s) supplied'
 fi
 
 errf 'fetching user IDs...\n'
+IDS="$(get_ids "${USERNAMES[@]}" | tr -d '\r')"
 
 declare -A id_username
-for username in "$@"
+i=0
+while read -r ID
 do
-  id=$(get_id $username)
-  if [ "$id" == "" ];
+  USERNAME="${USERNAMES[${i}]}"
+  if [[ "${ID}" -eq "-1" ]]
   then
-    errf $'ERROR! could not get ID for \'%s\'' "$username"
+    errf 'ERROR! could not get ID for "%s"' "$USERNAME"
     exit 1
   fi
-  id_username[$id]=$username
-done
+  id_username["${ID}"]="${USERNAME}"
+  ((i++))
+done <<< "${IDS}"
 
 (
   trap exit SIGINT SIGTERM
