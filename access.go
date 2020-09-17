@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type accessToken struct {
@@ -13,7 +14,18 @@ type accessToken struct {
 }
 
 func getAcessToken(c *http.Client, username string) (*accessToken, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf(accessURL, username), nil)
+	aURL, err := url.Parse(fmt.Sprintf(accessURL, username))
+	if err != nil {
+		return nil, err
+	}
+
+	query := aURL.Query()
+
+	query.Set("platform", "_")
+
+	aURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequest("GET", aURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
