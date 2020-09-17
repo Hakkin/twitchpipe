@@ -157,6 +157,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	username = strings.ToLower(username)
+
 	if terminal.IsTerminal(int(os.Stdout.Fd())) && !forceOutput && !externalCommand && !groupList {
 		stdErr.Println("[WARNING] You have not piped the output anywhere.")
 		stdErr.Println("          Outputting binary data to a terminal can be dangerous.")
