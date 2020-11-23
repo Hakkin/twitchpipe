@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"testing"
 )
 
@@ -17,7 +18,14 @@ func TestGetAccessToken(t *testing.T) {
 	}
 
 	client := NewTestClient(func(req *http.Request) *http.Response {
-		equals(t, fmt.Sprintf(accessURL, testUsername), req.URL.String())
+		aURL, err := url.Parse(fmt.Sprintf(accessURL, testUsername))
+		ok(t, err)
+
+		query := aURL.Query()
+		query.Set("player_type", "embed")
+		aURL.RawQuery = query.Encode()
+
+		equals(t, aURL.String(), req.URL.String())
 		equals(t, clientID, req.Header.Get("Client-ID"))
 		var jsonBuf bytes.Buffer
 		ok(t, json.NewEncoder(&jsonBuf).Encode(token))
