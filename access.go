@@ -21,7 +21,7 @@ func getAcessToken(c *http.Client, username string) (*accessToken, error) {
 
 	query := aURL.Query()
 
-	query.Set("platform", "_")
+	query.Set("player_type", "embed")
 
 	aURL.RawQuery = query.Encode()
 

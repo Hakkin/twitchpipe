@@ -21,6 +21,8 @@ func getURLs(c *http.Client, playlist string) ([]string, error) {
 		return nil, err
 	}
 
+	req.Header.Set("Origin", "https://player.twitch.tv")
+
 	res, err := c.Do(req)
 	if err != nil {
 		return nil, err
