@@ -7,7 +7,12 @@ WEBSOCKET_URL="wss://pubsub-edge.twitch.tv/v1"
 CLIENT_ID="kimne78kx3ncx6brgo4mv6wki5h1ko"
 
 PRINT_FILENAME=0
+<<<<<<< HEAD
 GROUP="chunked"
+=======
+FILENAME_TITLE=0
+FILENAME_DATE=0
+>>>>>>> bc71d4092b66110c59c3a0e13b444a664dca2d61
 
 errf(){ >&2 printf "$@"; }
 
@@ -18,6 +23,10 @@ get_ids () {
   DATA="$(jq -c -R '{"query":.}' <<< "${QUERY_STRING}")"
   IDS="$(curl --silent --fail -H "Client-ID: ${CLIENT_ID}" "${API_URL}" --data-raw "${DATA}" | jq -r ".data.users[].id | .//-1")"
   echo -n "${IDS}"
+}
+
+get_stream_title () {
+  curl --silent --fail -H "Client-ID: $CLIENT_ID" "$API_URL$1" | jq -r .status
 }
 
 print_usage() {
@@ -48,7 +57,11 @@ invalid_input() {
 
 check_deps
 
+<<<<<<< HEAD
 while getopts ":phg:" opt
+=======
+while getopts "d:pht" opt
+>>>>>>> bc71d4092b66110c59c3a0e13b444a664dca2d61
 do
   case "$opt" in
     p )
@@ -58,8 +71,18 @@ do
       print_usage
       exit 0
       ;;
+<<<<<<< HEAD
     g )
       GROUP="$OPTARG"
+=======
+    t )
+      FILENAME_TITLE=1
+      ;;
+    d )
+      FILENAME_DATE=1
+      DFORMAT="+""$OPTARG"
+      #OPTIND=`echo $OPTIND + 1 | bc`
+>>>>>>> bc71d4092b66110c59c3a0e13b444a664dca2d61
       ;;
     \? )
       invalid_input "$(printf $'unknown option \'-%s\'' "$OPTARG")"
@@ -128,11 +151,27 @@ done <<< "${IDS}"
       then
         (
           username=${id_username[$id]}
+          
           errf '[%s] stream started\a\n' "$username"
           while :
           do
             mkdir -p "$username"
-            filename=$(printf "%s/%s.ts" $username "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")
+
+            filename="$username/"
+            
+            if [ "$FILENAME_TITLE" == "1" ];
+              then
+                title=$(get_stream_title $username)
+                filename+="${title}_"
+            fi
+            if [ "$FILENAME_DATE" == "1" ];
+              then
+                filename+=$(date $DFORMAT)
+              else
+                filename+=$(date -u '+%Y-%m-%d-%H-%M-%S-(%Z)')
+            fi
+            filename+=".ts"
+
             errf '[%s] recording to %s\n' "$username" "$filename"
             (twitchpipe --archive --group "$GROUP" "$username" >> "$filename") 2>&1 | (
               while read -r line;
