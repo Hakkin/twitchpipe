@@ -71,9 +71,18 @@ do
       exit 0
       ;;
     g )
+      if [ -z  "${OPTARG}"]
+      then
+        invalid_input "option '-g' cannot be empty"
+        exit 1
+      fi
       GROUP="${OPTARG}"
       ;;
     f )
+      if [ -z "${OPTARG}" ]
+      then
+        invalid_input "option '-f' cannot be empty"
+      fi
       FILENAME_COMMAND="${OPTARG}"
       ;;
     \? )
