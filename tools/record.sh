@@ -8,8 +8,13 @@ CLIENT_ID="kimne78kx3ncx6brgo4mv6wki5h1ko"
 
 PRINT_FILENAME=0
 GROUP="chunked"
+FILENAME_COMMAND=$'date -u \'+%Y_%m_%d_%H_%M_%S_(%Z)\''
 
 errf(){ >&2 printf "${@}"; }
+
+safe_name() {
+	echo -n "${1//[[:cntrl:]<>:\/\\|?*]/_}"
+}
 
 get_ids () {
   USERNAMES="$(printf "%s\n" "${@}")"
@@ -24,9 +29,16 @@ print_usage() {
   errf "Usage: record [OPTIONS...] <USERNAMES...>\n"
   errf "\n"
   errf "Options:\n"
-  errf "  -h\tPrints this help text\n"
-  errf "  -p\tPrint filenames to standard output once stream ends\n"
-  errf "  -g\tSelect playlist group to record\n"
+  errf "  -h\t\t\tPrints this help text\n"
+  errf "  -p\t\t\tPrint filenames to standard output once stream ends\n"
+  errf "  -g <GROUP>\t\tSelect playlist group to record (default '%s')\n" "${GROUP}"
+  errf "  -f <COMMAND>\t\tCommand that will be evaluated to get output filename (default '%s')\n" "${FILENAME_COMMAND}"
+  errf "              \t\tFilename will be read from the command's standard output\n"
+  errf "              \t\tBash variables are expanded in the command, the following variables may be useful:\n"
+  errf $"             \t\t\t\$username: \tThe streamer's Twitch username\n"
+  errf $"             \t\t\t\$id: \t\tThe streamer's numerical Twitch ID\n"
+  errf "              \t\tNote that filenames are sanitized prior to use, so the final filename may not match exactly what this command returns\n"
+  errf "              \t\tAlong with sanitization, the file extension '.ts' will be appended to the final result\n"
 }
 
 check_deps() {
@@ -48,7 +60,7 @@ invalid_input() {
 
 check_deps
 
-while getopts ":phg:" opt
+while getopts ":phg:f:" opt
 do
   case "${opt}" in
     p )
@@ -60,6 +72,9 @@ do
       ;;
     g )
       GROUP="${OPTARG}"
+      ;;
+    f )
+      FILENAME_COMMAND="${OPTARG}"
       ;;
     \? )
       invalid_input "$(printf $'unknown option \'-%s\'' "${OPTARG}")"
@@ -132,7 +147,7 @@ done <<< "${IDS}"
           while :
           do
             mkdir -p "${username}"
-            filename="$(printf "%s/%s.ts" "${username}" "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")"
+            filename="$(printf "%s/%s.ts" "${username}" "$(safe_name "$(eval "${FILENAME_COMMAND}")")")"
             errf '[%s] recording to %s\n' "${username}" "${filename}"
             (twitchpipe --archive --group "${GROUP}" "${username}" >> "${filename}") 2>&1 | (
               while read -r line;
