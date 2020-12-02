@@ -9,7 +9,7 @@ CLIENT_ID="kimne78kx3ncx6brgo4mv6wki5h1ko"
 PRINT_FILENAME=0
 GROUP="chunked"
 
-errf(){ >&2 printf "$@"; }
+errf(){ >&2 printf "${@}"; }
 
 get_ids () {
   USERNAMES="$(printf "%s\n" "${@}")"
@@ -41,7 +41,7 @@ check_deps() {
 }
 
 invalid_input() {
-  errf "%s\n" "$1"
+  errf "%s\n" "${1}"
   errf $'try \'record -h\' for usage information'
   exit 1
 }
@@ -50,7 +50,7 @@ check_deps
 
 while getopts ":phg:" opt
 do
-  case "$opt" in
+  case "${opt}" in
     p )
       PRINT_FILENAME=1
       ;;
@@ -59,10 +59,10 @@ do
       exit 0
       ;;
     g )
-      GROUP="$OPTARG"
+      GROUP="${OPTARG}"
       ;;
     \? )
-      invalid_input "$(printf $'unknown option \'-%s\'' "$OPTARG")"
+      invalid_input "$(printf $'unknown option \'-%s\'' "${OPTARG}")"
       ;;
   esac
 done
@@ -85,7 +85,7 @@ do
   USERNAME="${USERNAMES[${i}]}"
   if [[ "${ID}" -eq "-1" ]]
   then
-    errf 'ERROR! could not get ID for "%s"' "$USERNAME"
+    errf 'ERROR! could not get ID for "%s"' "${USERNAME}"
     exit 1
   fi
   id_username["${ID}"]="${USERNAME}"
@@ -107,53 +107,53 @@ done <<< "${IDS}"
       ) &
       for k in "${!id_username[@]}"
       do
-        printf '{"type":"LISTEN","data":{"topics":["video-playback-by-id.%d"]}}\n' "$k"
+        printf '{"type":"LISTEN","data":{"topics":["video-playback-by-id.%d"]}}\n' "${k}"
       done
-    ) | websocat "$WEBSOCKET_URL"
+    ) | websocat "${WEBSOCKET_URL}"
     errf 'disconnected, re'
   done
 ) | (
   errf 'monitoring streams...\n'
   while read -r line;
   do
-    #errf ">%s\n" "$line"
-    type=$(echo "$line" | jq -r .type)
-    case $type in
+    #errf ">%s\n" "${line}"
+    type="$(echo "${line}" | jq -r .type)"
+    case "${type}" in
     MESSAGE)
-      id=$(echo "$line" | jq -r .data.topic | cut -d . -f 2)
-      message=$(echo "$line" | jq -r .data.message)
-      message_type=$(echo "$message" | jq -r .type)
+      id="$(echo "${line}" | jq -r .data.topic | cut -d . -f 2)"
+      message="$(echo "${line}" | jq -r .data.message)"
+      message_type="$(echo "${message}" | jq -r .type)"
       
-      if [ "$message_type" == "stream-up" ];
+      if [ "${message_type}" == "stream-up" ];
       then
         (
-          username=${id_username[$id]}
-          errf '[%s] stream started\a\n' "$username"
+          username="${id_username[${id}]}"
+          errf '[%s] stream started\a\n' "${username}"
           while :
           do
-            mkdir -p "$username"
-            filename=$(printf "%s/%s.ts" $username "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")
-            errf '[%s] recording to %s\n' "$username" "$filename"
-            (twitchpipe --archive --group "$GROUP" "$username" >> "$filename") 2>&1 | (
+            mkdir -p "${username}"
+            filename="$(printf "%s/%s.ts" "${username}" "$(date -u '+%Y_%m_%d_%H_%M_%S_(%Z)')")"
+            errf '[%s] recording to %s\n' "${username}" "${filename}"
+            (twitchpipe --archive --group "${GROUP}" "${username}" >> "${filename}") 2>&1 | (
               while read -r line;
               do
-                errf '[%s] %s\n' "$username" "$line"
+                errf '[%s] %s\n' "${username}" "${line}"
               done
             )
             EXIT_STATUS="${PIPESTATUS[0]}"
             if [ -s "${filename}" ]
             then
-              if [ "$PRINT_FILENAME" == "1" ];
+              if [ "${PRINT_FILENAME}" == "1" ];
               then
-                printf '%s\n' "$filename"
+                printf '%s\n' "${filename}"
               fi
             else
               errf '[%s] output file %s was empty, removing...\n' "${username}" "${filename}"
               rm "${filename}"
             fi
-            if [ "$EXIT_STATUS" == "2" ];
+            if [ "${EXIT_STATUS}" == "2" ];
             then
-              errf '[%s] stream ended with error, restarting...\n' "$username"
+              errf '[%s] stream ended with error, restarting...\n' "${username}"
               continue
             fi
             break
@@ -166,7 +166,7 @@ done <<< "${IDS}"
     RESPONSE)
       ;;
     *)
-      errf '>%s\n' "$line"
+      errf '>%s\n' "${line}"
       ;;
     esac
   done
