@@ -141,9 +141,15 @@ done <<< "${IDS}"
               done
             )
             EXIT_STATUS="${PIPESTATUS[0]}"
-            if [ "$PRINT_FILENAME" == "1" ];
+            if [ -s "${filename}" ]
             then
-              printf '%s\n' "$filename"
+              if [ "$PRINT_FILENAME" == "1" ];
+              then
+                printf '%s\n' "$filename"
+              fi
+            else
+              errf '[%s] output file %s was empty, removing...\n' "${username}" "${filename}"
+              rm "${filename}"
             fi
             if [ "$EXIT_STATUS" == "2" ];
             then
