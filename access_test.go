@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
@@ -31,7 +31,7 @@ func TestGetAccessToken(t *testing.T) {
 		ok(t, json.NewEncoder(&jsonBuf).Encode(token))
 		return &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(&jsonBuf),
+			Body:       io.NopCloser(&jsonBuf),
 			Header:     make(http.Header),
 		}
 	})

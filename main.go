@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 	"rsc.io/getopt"
 )
 
@@ -159,7 +159,7 @@ func main() {
 
 	username = strings.ToLower(username)
 
-	if terminal.IsTerminal(int(os.Stdout.Fd())) && !forceOutput && !externalCommand && !groupList {
+	if term.IsTerminal(int(os.Stdout.Fd())) && !forceOutput && !externalCommand && !groupList {
 		stdErr.Println("[WARNING] You have not piped the output anywhere.")
 		stdErr.Println("          Outputting binary data to a terminal can be dangerous.")
 		stdErr.Println("          To bypass this safety feature, use the '--force-output' option.")

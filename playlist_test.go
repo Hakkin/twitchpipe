@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -25,7 +25,7 @@ func TestGetPlaylist(t *testing.T) {
 
 		return &http.Response{
 			StatusCode: 200,
-			Body: ioutil.NopCloser(bytes.NewBufferString(`#EXTM3U
+			Body: io.NopCloser(bytes.NewBufferString(`#EXTM3U
 #EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="chunked",NAME="1080p60 (source)",AUTOSELECT=YES,DEFAULT=YES
 #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1234567,RESOLUTION=1920x1080,CODECS="avc1.64002A,mp4a.40.2",VIDEO="chunked",FRAME-RATE=60.000
 https://example.invalid/123.m3u8
@@ -40,7 +40,7 @@ https://example.invalid/456.m3u8`)),
 	ok(t, err)
 
 	equals(t, []playlistInfo{
-		playlistInfo{
+		{
 			Group:     "chunked",
 			Name:      "1080p60 (source)",
 			Bandwidth: 1234567,
@@ -48,7 +48,7 @@ https://example.invalid/456.m3u8`)),
 			Height:    1080,
 			URL:       "https://example.invalid/123.m3u8",
 		},
-		playlistInfo{
+		{
 			Group:     "720p60",
 			Name:      "720p60",
 			Bandwidth: 7654321,

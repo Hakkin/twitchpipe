@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -13,7 +13,7 @@ func TestStreamTs(t *testing.T) {
 		return &http.Response{
 			StatusCode: 200,
 			Body: &ReadCloserMock{
-				ReadCloser: ioutil.NopCloser(bytes.NewBufferString("CONTENTS")),
+				ReadCloser: io.NopCloser(bytes.NewBufferString("CONTENTS")),
 				CloserFunc: func() error {
 					return nil
 				},

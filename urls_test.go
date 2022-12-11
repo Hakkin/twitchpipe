@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -12,7 +12,7 @@ func TestGetURLs(t *testing.T) {
 		equals(t, "https://example.invalid/123.m3u8", req.URL.String())
 		return &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(prefetchTag + "https://example.invalid/123.ts")),
+			Body:       io.NopCloser(bytes.NewBufferString(prefetchTag + "https://example.invalid/123.ts")),
 			Header:     make(http.Header),
 		}
 	})
