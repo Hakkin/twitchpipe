@@ -38,8 +38,8 @@ func getPlaylists(c *http.Client, username string, token *accessToken) ([]playli
 	query.Set("allow_source", "true")
 	query.Set("allow_audio_only", "true")
 	query.Set("fast_bread", "true")
-	query.Set("sig", token.Sig)
-	query.Set("token", token.Token)
+	query.Set("sig", token.Signature)
+	query.Set("token", token.Value)
 
 	pURL.RawQuery = query.Encode()
 

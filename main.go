@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -17,114 +16,6 @@ import (
 )
 
 var stdErr = log.New(os.Stderr, "", 0)
-
-var (
-	forceOutput bool
-	usernameURL bool
-	archiveMode bool
-	hideConsole bool
-	groupSelect string
-	groupList   bool
-)
-
-func init() {
-	flag.BoolVar(&forceOutput, "f", false, "Force output to standard output even if TTY is detected")
-	flag.BoolVar(&usernameURL, "u", false, "Treat USERNAME as a URL")
-	flag.BoolVar(&archiveMode, "a", false, "Start downloading from the oldest segment rather than the newest")
-	flag.StringVar(&groupSelect, "g", "best", "Select specified playlist group\n\t\"best\" will select the best available group")
-	flag.BoolVar(&groupList, "G", false, "List available playlist groups and exit")
-	getopt.Aliases(
-		"f", "force-output",
-		"u", "url",
-		"a", "archive",
-		"g", "group",
-		"G", "list-groups",
-	)
-}
-
-func findBest(playlists []playlistInfo) playlistInfo {
-	var best playlistInfo
-	var highBitrate int
-	for _, p := range playlists {
-		if p.Group == "chunked" {
-			return p
-		}
-
-		if p.Bandwidth > highBitrate {
-			highBitrate = p.Bandwidth
-			best = p
-		}
-	}
-
-	return best
-}
-
-func printGroups(playlists []playlistInfo) {
-	columns := []*struct {
-		title   string
-		length  int
-		content []string
-		fn      func(p playlistInfo) string
-	}{
-		{"Group", 0, nil, func(p playlistInfo) string { return p.Group }},
-		{"Name", 0, nil, func(p playlistInfo) string { return p.Name }},
-		{"Resolution", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dx%d", p.Width, p.Height) }},
-		{"Bitrate", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dk", p.Bandwidth/1024) }},
-	}
-
-	for _, c := range columns {
-		c.length = len(c.title)
-	}
-
-	for _, p := range playlists {
-		for _, c := range columns {
-			content := c.fn(p)
-			c.content = append(c.content, content)
-			if len(content) > c.length {
-				c.length = len(content)
-			}
-		}
-	}
-
-	for _, c := range columns {
-		fmt.Fprint(os.Stderr, c.title)
-		if c.length-len(c.title) > 0 {
-			fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length-len(c.title)))
-		}
-		fmt.Fprint(os.Stderr, " ")
-	}
-
-	fmt.Fprintln(os.Stderr)
-
-	best := findBest(playlists)
-
-	for i := range playlists {
-		for _, c := range columns {
-			content := c.content[i]
-			fmt.Fprint(os.Stderr, content)
-			if c.length-len(content) > 0 {
-				fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length-len(content)))
-			}
-			fmt.Fprint(os.Stderr, " ")
-		}
-
-		if playlists[i].Group == best.Group {
-			fmt.Fprint(os.Stderr, "(best)")
-		}
-
-		fmt.Fprintln(os.Stderr)
-	}
-}
-
-func printUsage() {
-	stdErr.Println("Usage: twitchpipe [OPTIONS...] <USERNAME> [COMMAND...]")
-	stdErr.Println()
-	stdErr.Println("If COMMAND is specified, it will be executed and stream data will be \nwritten to its standard input.")
-	stdErr.Println("Otherwise, stream data will be written to standard output.")
-	stdErr.Println()
-	stdErr.Println("Options:")
-	getopt.PrintDefaults()
-}
 
 func main() {
 	getopt.Parse()
@@ -170,7 +61,15 @@ func main() {
 		Timeout: time.Second * 10,
 	}
 
-	token, err := getAcessToken(client, username)
+	variables := map[string]any{
+		"platform":   accessTokenPlatform,
+		"playerType": accessTokenPlayerType,
+	}
+	if accessTokenPlayerBackend.string != nil {
+		variables["playerBackend"] = *accessTokenPlayerBackend.string
+	}
+
+	token, err := getAcessToken(client, username, variables)
 	if err != nil {
 		stdErr.Printf("could not acquire access token: %v\n", err)
 		os.Exit(1)

@@ -1,31 +1,52 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 type accessToken struct {
-	Token string `json:"token"`
-	Sig   string `json:"sig"`
+	Value     string `json:"value"`
+	Signature string `json:"signature"`
 }
 
-func getAcessToken(c *http.Client, username string) (*accessToken, error) {
-	aURL, err := url.Parse(fmt.Sprintf(accessURL, username))
-	if err != nil {
-		return nil, err
+type gqlQuery struct {
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables"`
+}
+
+type gqlResponse struct {
+	Data   json.RawMessage `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
+type gqlAccessToken struct {
+	StreamPlaybackAccessToken struct {
+		accessToken
+	} `json:"streamPlaybackAccessToken"`
+}
+
+//go:embed access_token.gql
+var accessTokenQuery string
+
+func getAcessToken(c *http.Client, channelName string, variables map[string]any) (*accessToken, error) {
+	variables["channelName"] = channelName
+	q := &gqlQuery{
+		Query:     accessTokenQuery,
+		Variables: variables,
 	}
 
-	query := aURL.Query()
+	qs, err := json.Marshal(q)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling GQL query string: %w", err)
+	}
 
-	query.Set("player_type", "embed")
-
-	aURL.RawQuery = query.Encode()
-
-	req, err := http.NewRequest("GET", aURL.String(), nil)
+	req, err := http.NewRequest("POST", gqlURL, bytes.NewReader(qs))
 	if err != nil {
 		return nil, err
 	}
@@ -39,17 +60,27 @@ func getAcessToken(c *http.Client, username string) (*accessToken, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		if res.StatusCode != http.StatusNotFound {
-			return nil, fmt.Errorf("access got http status %s", res.Status)
+		return nil, fmt.Errorf("got non-200 http status code %s while fetching access token", res.Status)
+	}
+
+	var gqlRes gqlResponse
+	if err = json.NewDecoder(res.Body).Decode(&gqlRes); err != nil {
+		return nil, fmt.Errorf("error decoding GQL response: %w", err)
+	}
+
+	if len(gqlRes.Errors) != 0 {
+		var gqlErr string
+		for i := range gqlRes.Errors {
+			gqlErr += gqlRes.Errors[i].Message
 		}
-		return nil, errors.New("stream does not exist")
+
+		return nil, fmt.Errorf("GQL returned error(s) while fetching access token: %s", gqlErr)
 	}
 
-	var token accessToken
-	err = json.NewDecoder(res.Body).Decode(&token)
-	if err != nil {
-		return nil, err
+	var accessToken gqlAccessToken
+	if err = json.Unmarshal(gqlRes.Data, &accessToken); err != nil {
+		return nil, fmt.Errorf("error decoding access token: %w", err)
 	}
 
-	return &token, nil
+	return &accessToken.StreamPlaybackAccessToken.accessToken, nil
 }

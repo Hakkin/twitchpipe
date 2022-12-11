@@ -1,0 +1,20 @@
+query(
+  $channelName: String!
+  $platform: String!
+  $playerBackend: String
+  $playerType: String!
+) {
+  streamPlaybackAccessToken(
+    channelName: $channelName
+    params: {
+      disableHTTPS: false
+      hasAdblock: false
+      platform: $platform
+      playerBackend: $playerBackend
+      playerType: $playerType
+    }
+  ) {
+    signature
+    value
+  }
+}

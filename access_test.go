@@ -3,32 +3,48 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"testing"
 )
 
 func TestGetAccessToken(t *testing.T) {
 	testUsername := "testing"
-	token := &accessToken{
-		Token: "token",
-		Sig:   "sig",
+	accessToken := accessToken{
+		Value:     "token",
+		Signature: "sig",
+	}
+
+	gqlVariables := map[string]any{
+		"testing": "123",
+		"hello":   "world",
+	}
+
+	var gqlat gqlAccessToken
+	gqlat.StreamPlaybackAccessToken.accessToken = accessToken
+
+	var gqlrd bytes.Buffer
+	ok(t, json.NewEncoder(&gqlrd).Encode(&gqlat))
+
+	gqlr := gqlResponse{
+		Data: gqlrd.Bytes(),
 	}
 
 	client := NewTestClient(func(req *http.Request) *http.Response {
-		aURL, err := url.Parse(fmt.Sprintf(accessURL, testUsername))
-		ok(t, err)
-
-		query := aURL.Query()
-		query.Set("player_type", "embed")
-		aURL.RawQuery = query.Encode()
-
-		equals(t, aURL.String(), req.URL.String())
+		equals(t, gqlURL, req.URL.String())
+		equals(t, http.MethodPost, req.Method)
 		equals(t, clientID, req.Header.Get("Client-ID"))
+
+		var gqlq gqlQuery
+		ok(t, json.NewDecoder(req.Body).Decode(&gqlq))
+
+		equals(t, testUsername, gqlq.Variables["channelName"])
+		for k := range gqlVariables {
+			equals(t, gqlVariables[k], gqlq.Variables[k])
+		}
+
 		var jsonBuf bytes.Buffer
-		ok(t, json.NewEncoder(&jsonBuf).Encode(token))
+		ok(t, json.NewEncoder(&jsonBuf).Encode(&gqlr))
 		return &http.Response{
 			StatusCode: 200,
 			Body:       io.NopCloser(&jsonBuf),
@@ -36,7 +52,7 @@ func TestGetAccessToken(t *testing.T) {
 		}
 	})
 
-	testToken, err := getAcessToken(client, testUsername)
+	testToken, err := getAcessToken(client, testUsername, gqlVariables)
 	ok(t, err)
-	equals(t, token, testToken)
+	equals(t, &accessToken, testToken)
 }

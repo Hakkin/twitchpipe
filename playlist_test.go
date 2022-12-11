@@ -11,8 +11,8 @@ import (
 func TestGetPlaylist(t *testing.T) {
 	testUsername := "testing"
 	token := &accessToken{
-		Token: "token",
-		Sig:   "sig",
+		Value:     "token",
+		Signature: "sig",
 	}
 
 	client := NewTestClient(func(req *http.Request) *http.Response {
@@ -20,8 +20,8 @@ func TestGetPlaylist(t *testing.T) {
 			req.URL.String()[:len(req.URL.String())-len(req.URL.RawQuery)-1])
 		equals(t, "true", req.URL.Query().Get("allow_source"))
 		equals(t, "true", req.URL.Query().Get("fast_bread"))
-		equals(t, token.Sig, req.URL.Query().Get("sig"))
-		equals(t, token.Token, req.URL.Query().Get("token"))
+		equals(t, token.Signature, req.URL.Query().Get("sig"))
+		equals(t, token.Value, req.URL.Query().Get("token"))
 
 		return &http.Response{
 			StatusCode: 200,

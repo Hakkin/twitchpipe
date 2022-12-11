@@ -1,9 +1,9 @@
 package main
 
-const clientID = "jzkbprff40iqj646a697cyrvl0zt2m6"
+const clientID = "kimne78kx3ncx6brgo4mv6wki5h1ko"
 
 const (
-	accessURL   = "https://api.twitch.tv/api/channels/%s/access_token"
+	gqlURL      = "https://gql.twitch.tv/gql"
 	playlistURL = "https://usher.ttvnw.net/api/channel/hls/%s.m3u8"
 )
 

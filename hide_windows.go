@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&hideConsole, "h", false, "Hide own console window")
+	flag.BoolVar(&hideConsole, "h", hideConsoleDefault, "Hide own console window")
 	getopt.Aliases(
 		"h", "hide-console",
 	)
