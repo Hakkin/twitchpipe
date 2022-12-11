@@ -78,8 +78,8 @@ func init() {
 	flag.StringVar(&accessTokenPlatform, "access-token-platform", accessTokenPlatformDefault, "The platform to send when acquiring an access token")
 	flag.StringVar(&accessTokenPlayerType, "access-token-player-type", accessTokenPlayerTypeDefault, "The player type to send when acquiring an access token")
 	flag.Var(&accessTokenPlayerBackend, "access-token-player-backend", "The player backend to send when acquiring an access token (optional)")
-	flag.Var(&accessTokenOAuth, "access-token-oauth", "OAuth token to send when acquring an access token (optional)")
-	flag.Var(&accessTokenOAuth, "access-token-device-id", "Device ID to send when acquring an access token (optional)")
+	flag.Var(&accessTokenOAuth, "access-token-oauth", "OAuth token to send when acquiring an access token (optional)")
+	flag.Var(&accessTokenDeviceID, "access-token-device-id", "Device ID to send when acquiring an access token (optional)")
 }
 
 func printUsage() {
