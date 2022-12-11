@@ -54,7 +54,7 @@ var (
 	accessTokenPlatformDefault = "web"
 
 	accessTokenPlayerType        string
-	accessTokenPlayerTypeDefault = "embed"
+	accessTokenPlayerTypeDefault = "site"
 
 	accessTokenPlayerBackend optionalString
 	accessTokenOAuth         optionalString
