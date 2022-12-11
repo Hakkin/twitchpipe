@@ -5,7 +5,7 @@ Supports low-latency playback.
 
 # Installation
 ```
-go get github.com/Hakkin/twitchpipe
+go install github.com/Hakkin/twitchpipe@latest
 ```
 
 # Usage
@@ -21,6 +21,16 @@ Options:
         List available playlist groups and exit
   -a, --archive
         Start downloading from the oldest segment rather than the newest
+  --access-token-device-id value
+        Device ID to send when acquiring an access token (optional)
+  --access-token-oauth value
+        OAuth token to send when acquiring an access token (optional)
+  --access-token-platform string
+        The platform to send when acquiring an access token (default "web")
+  --access-token-player-backend value
+        The player backend to send when acquiring an access token (optional)
+  --access-token-player-type string
+        The player type to send when acquiring an access token (default "site")
   -f, --force-output
         Force output to standard output even if TTY is detected
   -g, --group string
