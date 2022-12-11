@@ -7,6 +7,7 @@ Supports low-latency playback.
 ```
 go install github.com/Hakkin/twitchpipe@latest
 ```
+Requires at least Go 1.18
 
 # Usage
 ```
