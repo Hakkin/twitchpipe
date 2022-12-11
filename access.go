@@ -34,7 +34,7 @@ type gqlAccessToken struct {
 //go:embed access_token.gql
 var accessTokenQuery string
 
-func getAcessToken(c *http.Client, channelName string, variables map[string]any) (*accessToken, error) {
+func getAcessToken(c *http.Client, channelName string, oAuthToken *string, deviceID *string, variables map[string]any) (*accessToken, error) {
 	variables["channelName"] = channelName
 	q := &gqlQuery{
 		Query:     accessTokenQuery,
@@ -52,6 +52,14 @@ func getAcessToken(c *http.Client, channelName string, variables map[string]any)
 	}
 
 	req.Header.Set("Client-ID", clientID)
+
+	if oAuthToken != nil {
+		req.Header.Set("Authorization", "OAuth "+*oAuthToken)
+	}
+
+	if deviceID != nil {
+		req.Header.Set("Device-ID", *deviceID)
+	}
 
 	res, err := c.Do(req)
 	if err != nil {

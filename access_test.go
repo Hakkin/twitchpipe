@@ -10,6 +10,8 @@ import (
 
 func TestGetAccessToken(t *testing.T) {
 	testUsername := "testing"
+	testOAuth := "secret"
+	testDeviceID := "abc123"
 	accessToken := accessToken{
 		Value:     "token",
 		Signature: "sig",
@@ -34,6 +36,8 @@ func TestGetAccessToken(t *testing.T) {
 		equals(t, gqlURL, req.URL.String())
 		equals(t, http.MethodPost, req.Method)
 		equals(t, clientID, req.Header.Get("Client-ID"))
+		equals(t, "OAuth "+testOAuth, req.Header.Get("Authorization"))
+		equals(t, testDeviceID, req.Header.Get("Device-ID"))
 
 		var gqlq gqlQuery
 		ok(t, json.NewDecoder(req.Body).Decode(&gqlq))
@@ -52,7 +56,7 @@ func TestGetAccessToken(t *testing.T) {
 		}
 	})
 
-	testToken, err := getAcessToken(client, testUsername, gqlVariables)
+	testToken, err := getAcessToken(client, testUsername, &testOAuth, &testDeviceID, gqlVariables)
 	ok(t, err)
 	equals(t, &accessToken, testToken)
 }

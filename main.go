@@ -69,7 +69,7 @@ func main() {
 		variables["playerBackend"] = *accessTokenPlayerBackend.string
 	}
 
-	token, err := getAcessToken(client, username, variables)
+	token, err := getAcessToken(client, username, accessTokenOAuth.string, accessTokenDeviceID.string, variables)
 	if err != nil {
 		stdErr.Printf("could not acquire access token: %v\n", err)
 		os.Exit(1)
