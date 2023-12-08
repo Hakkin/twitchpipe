@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
+	"strings"
 )
-
-var urlRegexp = regexp.MustCompile(`https?://[^\s]+\.ts$`)
 
 var (
 	errNoLinks    = errors.New("no links found")
@@ -43,11 +41,13 @@ func getURLs(c *http.Client, playlist string) ([]string, error) {
 	scanner := bufio.NewScanner(res.Body)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
-		if scanner.Text() == "#EXT-X-ENDLIST" {
+		switch v := scanner.Text(); {
+		case !strings.HasPrefix(v, "#"):
+			urls = append(urls, v)
+		case strings.HasPrefix(v, prefetchTag):
+			urls = append(urls, v[len(prefetchTag):])
+		case v == "#EXT-X-ENDLIST":
 			done = true
-		}
-		if url := urlRegexp.FindString(scanner.Text()); url != "" {
-			urls = append(urls, url)
 		}
 	}
 
