@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -13,7 +14,14 @@ var (
 	errStreamOver = errors.New("stream over")
 )
 
-func getURLs(c *http.Client, playlist string) ([]string, error) {
+var initRegex = regexp.MustCompile(`URI="([^"]*)"`)
+
+type segmentURL struct {
+	URL    string
+	IsInit bool
+}
+
+func getURLs(c *http.Client, playlist string) ([]segmentURL, error) {
 	req, err := http.NewRequest("GET", playlist, nil)
 	if err != nil {
 		return nil, err
@@ -35,7 +43,7 @@ func getURLs(c *http.Client, playlist string) ([]string, error) {
 		return nil, fmt.Errorf("urls got http status %s", res.Status)
 	}
 
-	var urls []string
+	var urls []segmentURL
 
 	var done bool
 	scanner := bufio.NewScanner(res.Body)
@@ -43,9 +51,15 @@ func getURLs(c *http.Client, playlist string) ([]string, error) {
 	for scanner.Scan() {
 		switch v := scanner.Text(); {
 		case !strings.HasPrefix(v, "#"):
-			urls = append(urls, v)
+			urls = append(urls, segmentURL{v, false})
 		case strings.HasPrefix(v, prefetchTag):
-			urls = append(urls, v[len(prefetchTag):])
+			urls = append(urls, segmentURL{v[len(prefetchTag):], false})
+		case strings.HasPrefix(v, initTag):
+			matches := initRegex.FindStringSubmatch(v[len(initTag):])
+			if len(matches) != 2 {
+				break
+			}
+			urls = append(urls, segmentURL{matches[1], true})
 		case v == "#EXT-X-ENDLIST":
 			done = true
 		}

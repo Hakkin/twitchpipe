@@ -8,5 +8,6 @@ const (
 )
 
 const prefetchTag = "#EXT-X-TWITCH-PREFETCH:"
+const initTag = "#EXT-X-MAP:"
 
 const maxSeenURLs = 50

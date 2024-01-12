@@ -2,24 +2,33 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
 )
 
 func TestGetURLs(t *testing.T) {
+	prefetchURL := "https://example.invalid/123.ts"
+	initURL := "https://example.invalid/init.mp4"
+	normalURL := "https://example.invalid/456.ts"
+
 	client := NewTestClient(func(req *http.Request) *http.Response {
 		equals(t, "https://example.invalid/123.m3u8", req.URL.String())
 		return &http.Response{
 			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewBufferString(prefetchTag + "https://example.invalid/123.ts")),
-			Header:     make(http.Header),
+			Body: io.NopCloser(bytes.NewBufferString(
+				fmt.Sprintf("#EXTM3U\n#EXT-X-MAP:URI=\"%s\"\n%s\n#EXT-X-TWITCH-PREFETCH:%s\n", initURL, normalURL, prefetchURL),
+			)),
+			Header: make(http.Header),
 		}
 	})
 
-	prefetch, err := getURLs(client, "https://example.invalid/123.m3u8")
+	urls, err := getURLs(client, "https://example.invalid/123.m3u8")
 	ok(t, err)
 
-	equals(t, 1, len(prefetch))
-	equals(t, "https://example.invalid/123.ts", prefetch[0])
+	equals(t, 3, len(urls))
+	equals(t, segmentURL{initURL, true}, urls[0])
+	equals(t, segmentURL{normalURL, false}, urls[1])
+	equals(t, segmentURL{prefetchURL, false}, urls[2])
 }

@@ -131,12 +131,16 @@ func main() {
 	var seenURLs []string
 	seenURLsIndex := make(map[string]bool)
 
+	isInit := true
 	urls, urlsErr := getURLs(client, playlistURL)
 	if !archiveMode {
 		if len(urls) > 1 {
 			for _, url := range urls[0 : len(urls)-1] {
-				seenURLsIndex[url] = true
-				seenURLs = append(seenURLs, url)
+				if url.IsInit {
+					continue
+				}
+				seenURLsIndex[url.URL] = true
+				seenURLs = append(seenURLs, url.URL)
 			}
 		}
 	}
@@ -166,13 +170,17 @@ func main() {
 		}
 
 		for _, url := range urls {
-			if seenURLsIndex[url] {
+			if seenURLsIndex[url.URL] {
 				continue
 			}
-			seenURLsIndex[url] = true
-			seenURLs = append(seenURLs, url)
+			seenURLsIndex[url.URL] = true
+			seenURLs = append(seenURLs, url.URL)
 
-			tsURLs <- url
+			if url.IsInit && !isInit {
+				continue
+			}
+
+			tsURLs <- url.URL
 		}
 
 		if len(seenURLs) > maxSeenURLs {
@@ -184,7 +192,9 @@ func main() {
 			}
 		}
 
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 1)
+
+		isInit = false
 
 		urls, urlsErr = getURLs(client, playlistURL)
 	}
