@@ -18,6 +18,7 @@ type playlistInfo struct {
 	Width     int
 	Height    int
 	URL       string
+	Codec     string
 }
 
 var (
@@ -25,6 +26,7 @@ var (
 	nameRegex       = regexp.MustCompile(`NAME="([^"]+)"`)
 	bandwidthRegex  = regexp.MustCompile(`BANDWIDTH=([0-9]+)`)
 	resolutionRegex = regexp.MustCompile(`RESOLUTION=([0-9]+x[0-9]+)`)
+	codecRegex      = regexp.MustCompile(`CODECS="([^"]+)"`)
 )
 
 func getPlaylists(c *http.Client, username string, token *accessToken) ([]playlistInfo, error) {
@@ -36,6 +38,11 @@ func getPlaylists(c *http.Client, username string, token *accessToken) ([]playli
 	query := pURL.Query()
 
 	query.Set("allow_source", "true")
+	query.Set("platform", "web")
+	query.Set("player_backend", "mediaplayer")
+	query.Set("playlist_include_framerate", "true")
+	query.Set("reassignments_supported", "true")
+	query.Set("supported_codecs", "av1,h265,h264")
 	query.Set("allow_audio_only", "true")
 	query.Set("fast_bread", "true")
 	query.Set("sig", token.Signature)
@@ -103,6 +110,11 @@ func getPlaylists(c *http.Client, username string, token *accessToken) ([]playli
 				if err == nil {
 					info.Bandwidth = bandwidthInt
 				}
+			}
+
+			codecMatch := codecRegex.FindStringSubmatch(attribute)
+			if codecMatch != nil {
+				info.Codec = codecMatch[1]
 			}
 
 			resolutionMatch := resolutionRegex.FindStringSubmatch(attribute)

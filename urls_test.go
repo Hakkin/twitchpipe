@@ -18,7 +18,7 @@ func TestGetURLs(t *testing.T) {
 		return &http.Response{
 			StatusCode: 200,
 			Body: io.NopCloser(bytes.NewBufferString(
-				fmt.Sprintf("#EXTM3U\n#EXT-X-MAP:URI=\"%s\"\n%s\n#EXT-X-TWITCH-PREFETCH:%s\n", initURL, normalURL, prefetchURL),
+				fmt.Sprintf("#EXTM3U\n#EXT-X-MAP:URI=\"%s\"\n#EXTINF:2.00,live\n%s\n#EXT-X-TWITCH-PREFETCH:%s\n", initURL, normalURL, prefetchURL),
 			)),
 			Header: make(http.Header),
 		}
@@ -27,8 +27,23 @@ func TestGetURLs(t *testing.T) {
 	urls, err := getURLs(client, "https://example.invalid/123.m3u8")
 	ok(t, err)
 
-	equals(t, 3, len(urls))
-	equals(t, segmentURL{initURL, true}, urls[0])
-	equals(t, segmentURL{normalURL, false}, urls[1])
-	equals(t, segmentURL{prefetchURL, false}, urls[2])
+	equals(t, 2, len(urls))
+	equals(t, Segment{
+		Name:          "",
+		URI:           normalURL,
+		MapURI:        initURL,
+		Duration:      0,
+		Seq:           0,
+		Discontinuity: false,
+		Prefetch:      false,
+	}, urls[0])
+	equals(t, Segment{
+		Name:          "",
+		URI:           prefetchURL,
+		MapURI:        initURL,
+		Duration:      0,
+		Seq:           1,
+		Discontinuity: false,
+		Prefetch:      true,
+	}, urls[1])
 }

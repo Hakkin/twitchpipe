@@ -8,6 +8,10 @@ const (
 )
 
 const prefetchTag = "#EXT-X-TWITCH-PREFETCH:"
-const initTag = "#EXT-X-MAP:"
+const mapTag = "#EXT-X-MAP:"
+const infTag = "#EXTINF:"
+const discontinuityTag = "#EXT-X-DISCONTINUITY"
+const mediaSequenceTag = "#EXT-X-MEDIA-SEQUENCE:"
+const endListTag = "#EXT-X-ENDLIST"
 
 const maxSeenURLs = 50

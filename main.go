@@ -128,21 +128,11 @@ func main() {
 	done := make(chan error, 1)
 	go streamTs(client, tsURLs, output, done)
 
-	var seenURLs []string
-	seenURLsIndex := make(map[string]bool)
-
-	isInit := true
+	var currentSeq int
+	var needInit bool = true
 	urls, urlsErr := getURLs(client, playlistURL)
-	if !archiveMode {
-		if len(urls) > 1 {
-			for _, url := range urls[0 : len(urls)-1] {
-				if url.IsInit {
-					continue
-				}
-				seenURLsIndex[url.URL] = true
-				seenURLs = append(seenURLs, url.URL)
-			}
-		}
+	if !archiveMode && len(urls) > 1 {
+		currentSeq = urls[len(urls)-1].Seq
 	}
 
 	for {
@@ -170,31 +160,25 @@ func main() {
 		}
 
 		for _, url := range urls {
-			if seenURLsIndex[url.URL] {
-				continue
-			}
-			seenURLsIndex[url.URL] = true
-			seenURLs = append(seenURLs, url.URL)
-
-			if url.IsInit && !isInit {
+			if url.Seq < currentSeq {
 				continue
 			}
 
-			tsURLs <- url.URL
-		}
-
-		if len(seenURLs) > maxSeenURLs {
-			var removed []string
-			delta := len(seenURLs) - maxSeenURLs
-			removed, seenURLs = seenURLs[0:delta-1], seenURLs[delta:]
-			for _, url := range removed {
-				delete(seenURLsIndex, url)
+			if url.Discontinuity {
+				needInit = true
 			}
+
+			if url.MapURI != "" && needInit {
+				tsURLs <- url.MapURI
+			}
+			needInit = false
+
+			tsURLs <- url.URI
+
+			currentSeq = url.Seq + 1
 		}
 
 		time.Sleep(time.Second * 1)
-
-		isInit = false
 
 		urls, urlsErr = getURLs(client, playlistURL)
 	}

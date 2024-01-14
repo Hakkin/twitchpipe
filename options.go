@@ -119,6 +119,16 @@ func printGroups(playlists []playlistInfo) {
 		{"Group", 0, nil, func(p playlistInfo) string { return p.Group }},
 		{"Name", 0, nil, func(p playlistInfo) string { return p.Name }},
 		{"Resolution", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dx%d", p.Width, p.Height) }},
+		{"Codec", 0, nil, func(p playlistInfo) string {
+			var cs string
+			for _, c := range strings.Split(p.Codec, ",") {
+				cs += strings.SplitN(c, ".", 2)[0] + "+"
+			}
+			if cs != "" {
+				cs = cs[:len(cs)-1]
+			}
+			return cs
+		}},
 		{"Bitrate", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dk", p.Bandwidth/1024) }},
 	}
 
