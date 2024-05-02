@@ -34,6 +34,10 @@ func main() {
 		hideWindow()
 	}
 
+	if accessTokenDeviceID.string == nil {
+		accessTokenDeviceID.Set(randDeviceID())
+	}
+
 	externalCommand, externalArgs := len(flag.Args()) > 1, len(flag.Args()) > 2
 
 	username := flag.Arg(0)

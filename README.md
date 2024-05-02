@@ -24,6 +24,7 @@ Options:
         Start downloading from the oldest segment rather than the newest
   --access-token-device-id value
         Device ID to send when acquiring an access token (optional)
+        If no device ID is specified, one will be generated randomly
   --access-token-oauth value
         OAuth token to send when acquiring an access token (optional)
   --access-token-platform string

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -85,7 +86,7 @@ func init() {
 	flag.StringVar(&accessTokenPlayerType, "access-token-player-type", accessTokenPlayerTypeDefault, "The player type to send when acquiring an access token")
 	flag.Var(&accessTokenPlayerBackend, "access-token-player-backend", "The player backend to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenOAuth, "access-token-oauth", "OAuth token to send when acquiring an access token (optional)")
-	flag.Var(&accessTokenDeviceID, "access-token-device-id", "Device ID to send when acquiring an access token (optional)")
+	flag.Var(&accessTokenDeviceID, "access-token-device-id", "Device ID to send when acquiring an access token (optional)\n\tIf no device ID is specified, one will be generated randomly")
 }
 
 func printVersion() {
@@ -212,4 +213,8 @@ func printGroups(playlists []playlistInfo) {
 
 		fmt.Fprintln(os.Stderr)
 	}
+}
+
+func randDeviceID() string {
+	return fmt.Sprintf("%16x", rand.Uint64())
 }
