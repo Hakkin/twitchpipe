@@ -31,6 +31,8 @@ func (o *optionalString) String() string {
 	return *o.string
 }
 
+const version = "1.0"
+
 var (
 	forceOutput        bool
 	forceOutputDefault = false
@@ -50,6 +52,9 @@ var (
 	groupList        bool
 	groupListDefault = false
 
+	showVersion       bool
+	showVersionDefault = false
+
 	accessTokenPlatform        string
 	accessTokenPlatformDefault = "web"
 
@@ -67,12 +72,14 @@ func init() {
 	flag.BoolVar(&archiveMode, "a", archiveModeDefault, "Start downloading from the oldest segment rather than the newest")
 	flag.StringVar(&groupSelect, "g", groupSelectDefault, "Select specified playlist group\n\t\"best\" will select the best available group")
 	flag.BoolVar(&groupList, "G", groupListDefault, "List available playlist groups and exit")
+	flag.BoolVar(&showVersion, "v", showVersionDefault, "Show version information and exit")
 	getopt.Aliases(
 		"f", "force-output",
 		"u", "url",
 		"a", "archive",
 		"g", "group",
 		"G", "list-groups",
+		"v", "version",
 	)
 
 	flag.StringVar(&accessTokenPlatform, "access-token-platform", accessTokenPlatformDefault, "The platform to send when acquiring an access token")
@@ -80,6 +87,13 @@ func init() {
 	flag.Var(&accessTokenPlayerBackend, "access-token-player-backend", "The player backend to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenOAuth, "access-token-oauth", "OAuth token to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenDeviceID, "access-token-device-id", "Device ID to send when acquiring an access token (optional)")
+
+	// Check if the version flag is set
+	flag.Parse()
+	if showVersion {
+		fmt.Printf("Version: %s\n", version)
+		os.Exit(0)
+	}
 }
 
 func printUsage() {
@@ -96,11 +110,11 @@ func findBest(playlists []playlistInfo) playlistInfo {
 	var best playlistInfo
 	var highBitrate int
 	for _, p := range playlists {
-		if p.Group == "chunked" {
+		if (p.Group == "chunked") {
 			return p
 		}
 
-		if p.Bandwidth > highBitrate {
+		if (p.Bandwidth > highBitrate) {
 			highBitrate = p.Bandwidth
 			best = p
 		}
@@ -124,12 +138,12 @@ func printGroups(playlists []playlistInfo) {
 			for _, c := range strings.Split(p.Codec, ",") {
 				cs += strings.SplitN(c, ".", 2)[0] + "+"
 			}
-			if cs != "" {
+			if (cs != "") {
 				cs = cs[:len(cs)-1]
 			}
 			return cs
 		}},
-		{"Bitrate", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dk", p.Bandwidth/1024) }},
+		{"Bitrate", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dk", p.Bandwidth / 1024) }},
 	}
 
 	for _, c := range columns {
@@ -140,7 +154,7 @@ func printGroups(playlists []playlistInfo) {
 		for _, c := range columns {
 			content := c.fn(p)
 			c.content = append(c.content, content)
-			if len(content) > c.length {
+			if (len(content) > c.length) {
 				c.length = len(content)
 			}
 		}
@@ -148,8 +162,8 @@ func printGroups(playlists []playlistInfo) {
 
 	for _, c := range columns {
 		fmt.Fprint(os.Stderr, c.title)
-		if c.length-len(c.title) > 0 {
-			fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length-len(c.title)))
+		if (c.length - len(c.title) > 0) {
+			fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length - len(c.title)))
 		}
 		fmt.Fprint(os.Stderr, " ")
 	}
@@ -162,13 +176,13 @@ func printGroups(playlists []playlistInfo) {
 		for _, c := range columns {
 			content := c.content[i]
 			fmt.Fprint(os.Stderr, content)
-			if c.length-len(content) > 0 {
-				fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length-len(content)))
+			if (c.length - len(content) > 0) {
+				fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length - len(content)))
 			}
 			fmt.Fprint(os.Stderr, " ")
 		}
 
-		if playlists[i].Group == best.Group {
+		if (playlists[i].Group == best.Group) {
 			fmt.Fprint(os.Stderr, "(best)")
 		}
 
