@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"rsc.io/getopt"
@@ -30,8 +31,6 @@ func (o *optionalString) String() string {
 
 	return *o.string
 }
-
-const version = "1.0"
 
 var (
 	forceOutput        bool
@@ -87,13 +86,38 @@ func init() {
 	flag.Var(&accessTokenPlayerBackend, "access-token-player-backend", "The player backend to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenOAuth, "access-token-oauth", "OAuth token to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenDeviceID, "access-token-device-id", "Device ID to send when acquiring an access token (optional)")
+}
 
-	// Check if the version flag is set
-	flag.Parse()
-	if showVersion {
-		fmt.Printf("Version: %s\n", version)
-		os.Exit(0)
+func printVersion() {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		stdErr.Println("failed to read build info")
+		return
 	}
+
+	var versionString string
+
+	versionString += fmt.Sprintf("twitchpipe %s", bi.Main.Version)
+
+	if bi.Main.Version == "(devel)" {
+		var rev string
+		for _, s := range bi.Settings {
+			if s.Key == "vcs.revision" {
+				rev = s.Value
+				break
+			}
+		}
+
+		if rev != "" {
+			revLen := 7
+			if len(rev) < revLen {
+				revLen = len(rev)
+			}
+			versionString += fmt.Sprintf(" %s", rev[:revLen])
+		}
+	}
+
+	stdErr.Println(versionString)
 }
 
 func printUsage() {
