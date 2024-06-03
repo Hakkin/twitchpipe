@@ -52,7 +52,7 @@ var (
 	groupList        bool
 	groupListDefault = false
 
-	showVersion       bool
+	showVersion        bool
 	showVersionDefault = false
 
 	accessTokenPlatform        string
@@ -110,11 +110,11 @@ func findBest(playlists []playlistInfo) playlistInfo {
 	var best playlistInfo
 	var highBitrate int
 	for _, p := range playlists {
-		if (p.Group == "chunked") {
+		if p.Group == "chunked" {
 			return p
 		}
 
-		if (p.Bandwidth > highBitrate) {
+		if p.Bandwidth > highBitrate {
 			highBitrate = p.Bandwidth
 			best = p
 		}
@@ -138,12 +138,12 @@ func printGroups(playlists []playlistInfo) {
 			for _, c := range strings.Split(p.Codec, ",") {
 				cs += strings.SplitN(c, ".", 2)[0] + "+"
 			}
-			if (cs != "") {
+			if cs != "" {
 				cs = cs[:len(cs)-1]
 			}
 			return cs
 		}},
-		{"Bitrate", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dk", p.Bandwidth / 1024) }},
+		{"Bitrate", 0, nil, func(p playlistInfo) string { return fmt.Sprintf("%dk", p.Bandwidth/1024) }},
 	}
 
 	for _, c := range columns {
@@ -154,7 +154,7 @@ func printGroups(playlists []playlistInfo) {
 		for _, c := range columns {
 			content := c.fn(p)
 			c.content = append(c.content, content)
-			if (len(content) > c.length) {
+			if len(content) > c.length {
 				c.length = len(content)
 			}
 		}
@@ -162,8 +162,8 @@ func printGroups(playlists []playlistInfo) {
 
 	for _, c := range columns {
 		fmt.Fprint(os.Stderr, c.title)
-		if (c.length - len(c.title) > 0) {
-			fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length - len(c.title)))
+		if c.length-len(c.title) > 0 {
+			fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length-len(c.title)))
 		}
 		fmt.Fprint(os.Stderr, " ")
 	}
@@ -176,13 +176,13 @@ func printGroups(playlists []playlistInfo) {
 		for _, c := range columns {
 			content := c.content[i]
 			fmt.Fprint(os.Stderr, content)
-			if (c.length - len(content) > 0) {
-				fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length - len(content)))
+			if c.length-len(content) > 0 {
+				fmt.Fprint(os.Stderr, strings.Repeat(" ", c.length-len(content)))
 			}
 			fmt.Fprint(os.Stderr, " ")
 		}
 
-		if (playlists[i].Group == best.Group) {
+		if playlists[i].Group == best.Group {
 			fmt.Fprint(os.Stderr, "(best)")
 		}
 
