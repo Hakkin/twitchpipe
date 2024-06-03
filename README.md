@@ -42,6 +42,8 @@ Options:
         Hide own console window
   -u, --url
         Treat USERNAME as a URL
+  -v, --version
+        Show version information and exit
 ```
 `-h, --hide-console` is  a Windows specific switch that will hide the command prompt if `twitchpipe` is started directly.
 
