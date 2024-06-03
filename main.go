@@ -19,6 +19,12 @@ var stdErr = log.New(os.Stderr, "", 0)
 
 func main() {
 	getopt.Parse()
+
+	if showVersion {
+		printVersion()
+		os.Exit(0)
+	}
+
 	if len(flag.Args()) < 1 {
 		printUsage()
 		os.Exit(1)

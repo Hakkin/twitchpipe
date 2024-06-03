@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"rsc.io/getopt"
@@ -50,6 +51,9 @@ var (
 	groupList        bool
 	groupListDefault = false
 
+	showVersion        bool
+	showVersionDefault = false
+
 	accessTokenPlatform        string
 	accessTokenPlatformDefault = "web"
 
@@ -67,12 +71,14 @@ func init() {
 	flag.BoolVar(&archiveMode, "a", archiveModeDefault, "Start downloading from the oldest segment rather than the newest")
 	flag.StringVar(&groupSelect, "g", groupSelectDefault, "Select specified playlist group\n\t\"best\" will select the best available group")
 	flag.BoolVar(&groupList, "G", groupListDefault, "List available playlist groups and exit")
+	flag.BoolVar(&showVersion, "v", showVersionDefault, "Show version information and exit")
 	getopt.Aliases(
 		"f", "force-output",
 		"u", "url",
 		"a", "archive",
 		"g", "group",
 		"G", "list-groups",
+		"v", "version",
 	)
 
 	flag.StringVar(&accessTokenPlatform, "access-token-platform", accessTokenPlatformDefault, "The platform to send when acquiring an access token")
@@ -80,6 +86,38 @@ func init() {
 	flag.Var(&accessTokenPlayerBackend, "access-token-player-backend", "The player backend to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenOAuth, "access-token-oauth", "OAuth token to send when acquiring an access token (optional)")
 	flag.Var(&accessTokenDeviceID, "access-token-device-id", "Device ID to send when acquiring an access token (optional)")
+}
+
+func printVersion() {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		stdErr.Println("failed to read build info")
+		return
+	}
+
+	var versionString string
+
+	versionString += fmt.Sprintf("twitchpipe %s", bi.Main.Version)
+
+	if bi.Main.Version == "(devel)" {
+		var rev string
+		for _, s := range bi.Settings {
+			if s.Key == "vcs.revision" {
+				rev = s.Value
+				break
+			}
+		}
+
+		if rev != "" {
+			revLen := 7
+			if len(rev) < revLen {
+				revLen = len(rev)
+			}
+			versionString += fmt.Sprintf(" %s", rev[:revLen])
+		}
+	}
+
+	stdErr.Println(versionString)
 }
 
 func printUsage() {
